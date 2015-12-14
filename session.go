@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// Session contains basic info of the conn, and the input and output chan
 type Session struct {
 	Host    Host
 	client  *ssh.Client
@@ -15,6 +16,7 @@ type Session struct {
 	Exit    chan bool
 }
 
+// NewSession start a session
 func NewSession(host Host, client *ssh.Client) *Session {
 	in := make(chan string, 100)
 	out := make(chan string, 100)
@@ -38,12 +40,16 @@ func getStream(s *ssh.Session) (in io.WriteCloser, out io.Reader, stderr io.Read
 	return
 }
 
-func streamToChan(source io.Reader, host Host, out chan <- ComMsg) {
+func streamToChan(source io.Reader, host Host, out chan <- Message) {
 	for {
 		buf := make([]byte, 1<<10)
 		n, err := source.Read(buf)
 		if n > 0 {
-			out <- ComMsg{Host: host, Msg:string(buf[0:n])}
+			out <- Message{Type: MsgReceived, Host: host, Msg:string(buf[0:n])}
+		}
+		if err == io.EOF {
+			out <- Message{Type: MsgClose, Host: host}
+			return
 		}
 		if err != nil {
 			log.Fatalf("error read from stream: %v", err)
@@ -51,7 +57,8 @@ func streamToChan(source io.Reader, host Host, out chan <- ComMsg) {
 	}
 }
 
-func (s *Session) Start(out chan ComMsg) error {
+// Start initialize a connection to server
+func (s *Session) Start(out chan Message) error {
 	sess, err := s.client.NewSession()
 	if err != nil {
 		return err
@@ -84,7 +91,7 @@ func (s *Session) Start(out chan ComMsg) error {
 
 	log.WithFields(log.Fields{
 		"Type": "Status",
-		"Host": s.Host.Ip,
+		"Host": s.Host.IP,
 	}).Info("Session Start")
 	return nil
 }
@@ -95,7 +102,7 @@ func (s *Session) exeCmd(in io.WriteCloser) {
 		if len(cmd) > 0 {
 			log.WithFields(log.Fields{
 				"Type": "Command",
-				"Host": s.Host.Ip,
+				"Host": s.Host.IP,
 			}).Info(cmd)
 			in.Write([]byte(cmd))
 		}

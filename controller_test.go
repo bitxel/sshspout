@@ -8,8 +8,8 @@ import (
 
 func TestController(t *testing.T) {
 	hosts := sshspout.HostConfig{
-		sshspout.Host{Ip: "vm:22", User: "xt", Key: "~/.ssh/id_rsa"},
-		sshspout.Host{Ip: "gpxtrade.com:22", User: "root", Key: "~/.ssh/id_rsa"},
+		sshspout.Host{IP: "vm:22", User: "xt", Key: "~/.ssh/id_rsa"},
+		sshspout.Host{IP: "gpxtrade.com:22", User: "root", Key: "~/.ssh/id_rsa"},
 	}
 	ctl, err := sshspout.NewController(hosts)
 	if err != nil {
