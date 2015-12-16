@@ -1,4 +1,4 @@
-package sshspout
+package engine
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -71,7 +71,8 @@ func (ctl Controller) Hosts() []Host {
 }
 
 // Start to connect to the host, init the input and output channel
-func (ctl *Controller) Start() error {
+// TODO return error with specific host
+func (ctl *Controller) Start() (chan Message, error) {
 	for _, h := range ctl.hosts {
 		var config *ssh.ClientConfig
 		if len(h.Pass) > 0 {
@@ -88,11 +89,11 @@ func (ctl *Controller) Start() error {
 			// Deal with memory leak
 			privkey, err := ioutil.ReadFile(h.Key)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			signer, err := ssh.ParsePrivateKey([]byte(privkey))
 			if err != nil {
-				return err
+				return nil, err
 			}
 			config = &ssh.ClientConfig{
 				User: h.User,
@@ -104,16 +105,16 @@ func (ctl *Controller) Start() error {
 
 		client, err := ssh.Dial("tcp", h.IP, config)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		sess := NewSession(h, client)
 		if err = sess.Start(ctl.outChan); err != nil {
-			return err
+			return nil, err
 		}
 		ctl.clients[h] = sess
 	}
-	go GetResult(ctl.outChan)
-	return nil
+	//go GetResult(ctl.outChan)
+	return ctl.outChan,nil
 }
 
 // Wait for actions done
@@ -156,13 +157,3 @@ func (ctl *Controller) Run(cmd string) error {
 	return nil
 }
 
-// GetResult  get the output and print to the screen
-func GetResult(out chan Message) {
-	for {
-		msg := <- out
-		log.WithFields(log.Fields{
-			"Type": msg.Type,
-			"Host": msg.Host.IP,
-		}).Info(msg.Msg)
-	}
-}

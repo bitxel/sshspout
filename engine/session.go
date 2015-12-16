@@ -1,4 +1,4 @@
-package sshspout
+package engine
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -104,7 +104,10 @@ func (s *Session) exeCmd(in io.WriteCloser) {
 				"Type": "Command",
 				"Host": s.Host.IP,
 			}).Info(cmd)
-			in.Write([]byte(cmd))
+			_, err := in.Write([]byte(cmd))
+			if err != nil {
+				log.Errorf("write to chan error :%v")
+			}
 		}
 	}
 }

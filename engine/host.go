@@ -1,4 +1,4 @@
-package sshspout
+package engine
 
 import (
 	"errors"
