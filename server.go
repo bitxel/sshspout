@@ -15,13 +15,16 @@ import (
 func CmdHandler(ws *websocket.Conn) {
 	log.Debugf("readWriteServer %#v\n", ws.Config())
 
-	hosts := engine.HostConfig{
+	hosts := []engine.Host{
 		engine.Host{IP: "vm:22", User: "xt", Key: "~/.ssh/id_rsa"},
 		engine.Host{IP: "gpxtrade.com:22", User: "root", Key: "~/.ssh/id_rsa"},
 	}
-	ctl, err := engine.NewController(hosts)
-	if err != nil {
-		log.Errorf("create new controller error %v", err)
+	ctl := engine.NewController(len(hosts))
+	for k, v := range hosts {
+		if err:=v.Check(); err!= nil {
+			log.Errorf("server conf err: %s", v)
+		}
+		ctl.AddHost(engine.HostID(k), v)
 	}
 
 	c, err := ctl.Start()
@@ -62,8 +65,9 @@ func CmdHandler(ws *websocket.Conn) {
 func main() {
 	log.SetLevel(log.InfoLevel)
 	http.Handle("/cmd", websocket.Handler(CmdHandler))
+	http.Handle("/", http.FileServer(http.Dir("./ui")))
 	fmt.Println("Server started...")
-	err := http.ListenAndServe(":9999", nil)
+	err := http.ListenAndServe("127.0.0.1:9999", nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}

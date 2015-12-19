@@ -18,13 +18,17 @@ func GetResult(out chan engine.Message) {
 	}
 }
 func TestController(t *testing.T) {
-	hosts := engine.HostConfig{
+
+	hosts := []engine.Host{
 		engine.Host{IP: "vm:22", User: "xt", Key: "~/.ssh/id_rsa"},
 		engine.Host{IP: "gpxtrade.com:22", User: "root", Key: "~/.ssh/id_rsa"},
 	}
-	ctl, err := engine.NewController(hosts)
-	if err != nil {
-		t.Fatal(err)
+	ctl := engine.NewController(len(hosts))
+	for k, v := range hosts {
+		if err:= v.Check(); err != nil {
+			t.Fatal(err)
+		}
+		ctl.AddHost(engine.HostID(k),v)
 	}
 	t.Log(ctl.Hosts())
 	c, err := ctl.Start()

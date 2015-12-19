@@ -8,72 +8,52 @@ import (
 	"strings"
 )
 
-const (
-	maxMsgSize = 100
-)
-
-// MsgType basic message type
-type MsgType int
-
-const (
-	_ MsgType = iota
-	// MsgOpen open connection msg
-	MsgOpen
-	// MsgSend msg to server
-	MsgSend
-	// MsgReceived msg from server
-	MsgReceived
-	// MsgClose close msg
-	MsgClose
-	// MsgError error msg
-	MsgError
-)
-
-// Message between sever and client
-type Message struct {
-	Type MsgType
-	Host Host
-	Msg  string
-}
-
 // Controller is the core engine to deal with multiple connections
 type Controller struct {
-	hosts   HostConfig
-	clients map[Host]*Session
+	hosts   map[HostID]Host
+	clients map[HostID]*Session
 	outChan chan Message
 }
 
 // NewController init a new Controller
-func NewController(hc HostConfig) (*Controller, error) {
-	clients := make(map[Host]*Session, len(hc))
+func NewController(count int) *Controller {
+	clients := make(map[HostID]*Session, count)
+	hosts := make(map[HostID]Host, count)
 	outChan := make(chan Message, maxMsgSize)
-	if err := hc.Check(); err != nil {
-		return nil, err
-	}
-	return &Controller{clients: clients, hosts: hc, outChan: outChan}, nil
+	return &Controller{clients: clients, hosts: hosts, outChan: outChan}
 }
 
 // AddHost Add a server
-// TODO
-func (ctl *Controller) AddHost(h Host) error {
+func (ctl *Controller) AddHost(hid HostID, h Host) error {
+	if err := h.Check(); err!= nil {
+		return err
+	}
+	ctl.hosts[hid] = h
 	return nil
 }
 
 // DelHost Del a server
-// TODO
-func (ctl *Controller) DelHost(h Host) error {
+func (ctl *Controller) DelHost(hid HostID) error {
+	if _, exist := ctl.hosts[hid]; exist {
+		// TODO close server conn before delete
+		delete(ctl.hosts, hid)
+	}
 	return nil
 }
 
 // Hosts return the host list
-func (ctl Controller) Hosts() []Host {
-	return ctl.hosts
+func (ctl Controller) Hosts() map[HostID]Host {
+	hosts := make(map[HostID]Host, len(ctl.hosts))
+	for k,v := range ctl.hosts{
+		hosts[k] = v
+	}
+	return hosts
 }
 
 // Start to connect to the host, init the input and output channel
 // TODO return error with specific host
 func (ctl *Controller) Start() (chan Message, error) {
-	for _, h := range ctl.hosts {
+	for hid, h := range ctl.hosts {
 		var config *ssh.ClientConfig
 		if len(h.Pass) > 0 {
 			config = &ssh.ClientConfig{
@@ -111,7 +91,7 @@ func (ctl *Controller) Start() (chan Message, error) {
 		if err = sess.Start(ctl.outChan); err != nil {
 			return nil, err
 		}
-		ctl.clients[h] = sess
+		ctl.clients[hid] = sess
 	}
 	//go GetResult(ctl.outChan)
 	return ctl.outChan,nil
@@ -124,8 +104,8 @@ func (ctl *Controller) Wait() error {
 }
 
 // Close a single host
-func (ctl *Controller) Close(h Host) error {
-	if s, exist := ctl.clients[h]; exist {
+func (ctl *Controller) Close(hid HostID) error {
+	if s, exist := ctl.clients[hid]; exist {
 		if err := s.client.Close(); err != nil {
 			return err
 		}
@@ -139,7 +119,7 @@ func (ctl *Controller) CloseAll() error {
 	for h := range ctl.clients {
 		if err := ctl.Close(h); err != nil {
 			hasErr = true
-			log.Warnf("Close Host %s error: %v", h.IP, err)
+			log.Warnf("Close Host %s error: %v", ctl.hosts[h].IP, err)
 		}
 	}
 	// Return to Frontend

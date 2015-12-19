@@ -21,21 +21,16 @@ type Host struct {
 	Key  string
 }
 
-// HostConfig is param to initialize controller
-type HostConfig []Host
-
 // Check is to validate the host config
-func (hc HostConfig) Check() error {
-	for _, v := range hc {
-		if len(v.IP) == 0 {
-			return ErrIPNull
-		}
-		if len(v.User) == 0 {
-			return ErrUserNull
-		}
-		if len(v.Pass) == 0 && len(v.Key) == 0 {
-			return ErrPassAndKeyNull
-		}
+func (h Host) Check() error {
+	if len(h.IP) == 0 {
+		return ErrIPNull
+	}
+	if len(h.User) == 0 {
+		return ErrUserNull
+	}
+	if len(h.Pass) == 0 && len(h.Key) == 0 {
+		return ErrPassAndKeyNull
 	}
 	return nil
 }
