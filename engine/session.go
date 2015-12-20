@@ -8,6 +8,7 @@ import (
 
 // Session contains basic info of the conn, and the input and output chan
 type Session struct {
+	HostID  HostID
 	Host    Host
 	client  *ssh.Client
 	session *ssh.Session
@@ -17,11 +18,11 @@ type Session struct {
 }
 
 // NewSession start a session
-func NewSession(host Host, client *ssh.Client) *Session {
+func NewSession(hostID HostID, host Host, client *ssh.Client) *Session {
 	in := make(chan string, 100)
 	out := make(chan string, 100)
 	exit := make(chan bool, 1)
-	return &Session{Host: host, client: client, In: in, Out: out, Exit: exit}
+	return &Session{HostID: hostID, Host: host, client: client, In: in, Out: out, Exit: exit}
 }
 
 func getStream(s *ssh.Session) (in io.WriteCloser, out io.Reader, stderr io.Reader, err error) {
@@ -40,15 +41,15 @@ func getStream(s *ssh.Session) (in io.WriteCloser, out io.Reader, stderr io.Read
 	return
 }
 
-func streamToChan(source io.Reader, host Host, out chan <- Message) {
+func streamToChan(source io.Reader, hid HostID, out chan <- Message) {
 	for {
 		buf := make([]byte, 1<<10)
 		n, err := source.Read(buf)
 		if n > 0 {
-			out <- Message{Type: MsgReceived, Host: host, Msg:string(buf[0:n])}
+			out <- Message{Type: MsgReceived, HostID: hid, Msg:string(buf[0:n])}
 		}
 		if err == io.EOF {
-			out <- Message{Type: MsgClose, Host: host}
+			out <- Message{Type: MsgClose, HostID: hid}
 			return
 		}
 		if err != nil {
@@ -81,8 +82,8 @@ func (s *Session) Start(out chan Message) error {
 	if err != nil {
 		return err
 	}
-	go streamToChan(stdout, s.Host, out)
-	go streamToChan(stderr, s.Host, out)
+	go streamToChan(stdout, s.HostID, out)
+	go streamToChan(stderr, s.HostID, out)
 	go s.exeCmd(stdin)
 	err = sess.Shell()
 	if err != nil {

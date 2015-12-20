@@ -42,7 +42,7 @@ func (m MsgType) String() string {
 // Message between sever and client
 type Message struct {
 	Type MsgType
-	Host Host
+	HostID HostID
 	Msg  string
 }
 

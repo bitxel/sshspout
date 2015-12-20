@@ -11,9 +11,9 @@
           <input id="submit" type="button" value="提交"/>
     </div>
     <div id="status"></div>
-    <div id="output1" style="width:400px;height:400px;border:solid;margin:10px;float:left">
+    <div id="output0" style="width:400px;height:400px;border:solid;margin:10px;float:left">
     </div>
-    <div id="output2" style="width:400px;height:400px;border:solid;margin:10px;float:left">
+    <div id="output1" style="width:400px;height:400px;border:solid;margin:10px;float:left">
     </div>
 </body>
 <script language="javascript" type="text/javascript">
@@ -62,12 +62,11 @@
     }
 
     function printReceive(json){
-        console.log(json)
-        for(var i=1;i<=2;i++){
-            elem = document.getElementById("output"+i);
-            console.log(elem, elem.innerHTML);
-            elem.innerHTML += (json+"<br>");
-        }         
+        json = JSON.parse(json);
+        console.log(json);
+        hostID = json.HostID;
+        elem = document.getElementById("output"+hostID);
+        elem.innerHTML += (json.Msg+"<br>");
     }
 
     window.addEventListener("load", init, false);

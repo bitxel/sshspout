@@ -87,7 +87,7 @@ func (ctl *Controller) Start() (chan Message, error) {
 		if err != nil {
 			return nil, err
 		}
-		sess := NewSession(h, client)
+		sess := NewSession(hid, h, client)
 		if err = sess.Start(ctl.outChan); err != nil {
 			return nil, err
 		}

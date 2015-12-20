@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/bitxel/sshspout/engine"
+	"encoding/json"
+	"strconv"
 )
 
 // CmdHandler handle the cmd from user
@@ -24,7 +26,7 @@ func CmdHandler(ws *websocket.Conn) {
 		if err:=v.Check(); err!= nil {
 			log.Errorf("server conf err: %s", v)
 		}
-		ctl.AddHost(engine.HostID(k), v)
+		ctl.AddHost(engine.HostID(strconv.Itoa(k)), v)
 	}
 
 	c, err := ctl.Start()
@@ -37,9 +39,11 @@ func CmdHandler(ws *websocket.Conn) {
 			msg := <- out
 			log.WithFields(log.Fields{
 				"Type": msg.Type,
-				"Host": msg.Host.IP,
+				"Host": msg.HostID,
 			}).Info(msg.Msg)
-			err = websocket.JSON.Send(ws, msg)
+			res, _ := json.Marshal(msg)
+			log.Println(string(res))
+			err = websocket.Message.Send(ws, string(res))
 			if err != nil {
 				log.Errorf("websocket send error:%v", err)
 				break
