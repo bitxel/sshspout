@@ -25,7 +25,7 @@ func NewController(count int) *Controller {
 
 // AddHost Add a server
 func (ctl *Controller) AddHost(hid HostID, h Host) error {
-	if err := h.Check(); err!= nil {
+	if err := h.Check(); err != nil {
 		return err
 	}
 	ctl.hosts[hid] = h
@@ -44,7 +44,7 @@ func (ctl *Controller) DelHost(hid HostID) error {
 // Hosts return the host list
 func (ctl Controller) Hosts() map[HostID]Host {
 	hosts := make(map[HostID]Host, len(ctl.hosts))
-	for k,v := range ctl.hosts{
+	for k, v := range ctl.hosts {
 		hosts[k] = v
 	}
 	return hosts
@@ -94,7 +94,7 @@ func (ctl *Controller) Start() (chan Message, error) {
 		ctl.clients[hid] = sess
 	}
 	//go GetResult(ctl.outChan)
-	return ctl.outChan,nil
+	return ctl.outChan, nil
 }
 
 // Wait for actions done
@@ -136,4 +136,3 @@ func (ctl *Controller) Run(cmd string) error {
 	}
 	return nil
 }
-

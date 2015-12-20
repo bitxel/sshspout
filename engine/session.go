@@ -41,12 +41,12 @@ func getStream(s *ssh.Session) (in io.WriteCloser, out io.Reader, stderr io.Read
 	return
 }
 
-func streamToChan(source io.Reader, hid HostID, out chan <- Message) {
+func streamToChan(source io.Reader, hid HostID, out chan<- Message) {
 	for {
 		buf := make([]byte, 1<<10)
 		n, err := source.Read(buf)
 		if n > 0 {
-			out <- Message{Type: MsgReceived, HostID: hid, Msg:string(buf[0:n])}
+			out <- Message{Type: MsgReceived, HostID: hid, Msg: string(buf[0:n])}
 		}
 		if err == io.EOF {
 			out <- Message{Type: MsgClose, HostID: hid}

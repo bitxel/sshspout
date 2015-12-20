@@ -10,10 +10,10 @@ import (
 // GetResult  get the output and print to the screen
 func GetResult(out chan engine.Message) {
 	for {
-		msg := <- out
+		msg := <-out
 		log.WithFields(log.Fields{
 			"Type": msg.Type,
-			"Host": msg.Host.IP,
+			"HostID": msg.HostID,
 		}).Info(msg.Msg)
 	}
 }
@@ -25,10 +25,10 @@ func TestController(t *testing.T) {
 	}
 	ctl := engine.NewController(len(hosts))
 	for k, v := range hosts {
-		if err:= v.Check(); err != nil {
+		if err := v.Check(); err != nil {
 			t.Fatal(err)
 		}
-		ctl.AddHost(engine.HostID(k),v)
+		ctl.AddHost(engine.HostID(k), v)
 	}
 	t.Log(ctl.Hosts())
 	c, err := ctl.Start()

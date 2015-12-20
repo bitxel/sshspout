@@ -8,14 +8,14 @@ var (
 	// ErrIPNull is the error IP is null in the config
 	ErrIPNull = errors.New("Host Ip is null")
 	// ErrUserNull is the error User is null in the config
-	ErrUserNull       = errors.New("Host User is null")
+	ErrUserNull = errors.New("Host User is null")
 	// ErrPassAndKeyNull is the error Password or Public Key are both null
 	ErrPassAndKeyNull = errors.New("Host password and private key both null")
 )
 
 // Host is the basic info of a server
 type Host struct {
-	IP string
+	IP   string
 	User string
 	Pass string
 	Key  string

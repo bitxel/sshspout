@@ -1,12 +1,12 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"golang.org/x/net/websocket"
-	"fmt"
-	"net/http"
-	"github.com/bitxel/sshspout/engine"
 	"encoding/json"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/bitxel/sshspout/engine"
+	"golang.org/x/net/websocket"
+	"net/http"
 	"strconv"
 )
 
@@ -23,7 +23,7 @@ func CmdHandler(ws *websocket.Conn) {
 	}
 	ctl := engine.NewController(len(hosts))
 	for k, v := range hosts {
-		if err:=v.Check(); err!= nil {
+		if err := v.Check(); err != nil {
 			log.Errorf("server conf err: %s", v)
 		}
 		ctl.AddHost(engine.HostID(strconv.Itoa(k)), v)
@@ -34,21 +34,20 @@ func CmdHandler(ws *websocket.Conn) {
 		log.Errorf("start session error %v:", err)
 	}
 
-	go func(out chan engine.Message){
+	go func(out chan engine.Message) {
 		for {
-			msg := <- out
+			msg := <-out
 			log.WithFields(log.Fields{
 				"Type": msg.Type,
 				"Host": msg.HostID,
 			}).Info(msg.Msg)
 			res, _ := json.Marshal(msg)
-			log.Println(string(res))
 			err = websocket.Message.Send(ws, string(res))
 			if err != nil {
 				log.Errorf("websocket send error:%v", err)
 				break
 			}
-			log.Infof("send:%q\n", msg)
+			log.Infof("send to web ui:%q\n", msg)
 		}
 	}(c)
 
@@ -60,7 +59,7 @@ func CmdHandler(ws *websocket.Conn) {
 			break
 		}
 		log.Infof("recv cmd:%q\n", buf)
-		ctl.Run(buf+"\n")
+		ctl.Run(buf + "\n")
 	}
 	ctl.CloseAll()
 }
